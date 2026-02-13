@@ -1,8 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:irinko/utils/consts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:irinko/utils/app_colors.dart';
 import 'package:irinko/pages/about_page.dart';
+import 'package:irinko/pages/promotions_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -12,7 +16,10 @@ class App extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: const HomePage(),
-      routes: {'/about': (context) => const AboutPage()},
+      routes: {
+        '/about': (context) => const AboutPage(),
+        '/promotions': (context) => const PromotionsPage(),
+      },
     );
   }
 }
@@ -32,10 +39,12 @@ class HomePage extends StatelessWidget {
                 // 1. Hero Section
                 SizedBox(
                   height: MediaQuery.of(context).size.height,
-                  child: Stack(children: [_buildHeroText(context), _buildHeroImage()]),
+                  child: Stack(
+                    children: [_buildHeroText(context), _buildHeroImage()],
+                  ),
                 ),
 
-                // 2. Новинки (по типу Популярное)
+                // 2. Новинки
                 const _NoveltySection(),
 
                 const SizedBox(height: 100),
@@ -45,7 +54,7 @@ class HomePage extends StatelessWidget {
 
                 const SizedBox(height: 100),
 
-                // 4. Каталог (Сетка)
+                // 4. Каталог
                 const _CatalogSection(),
 
                 const SizedBox(height: 100),
@@ -76,7 +85,10 @@ class HomePage extends StatelessWidget {
           builder: (context, value, child) {
             return Transform.translate(
               offset: Offset(value * 100, 0),
-              child: Opacity(opacity: (1.0 + value).clamp(0.0, 1.0), child: child),
+              child: Opacity(
+                opacity: (1.0 + value).clamp(0.0, 1.0),
+                child: child,
+              ),
             );
           },
           child: Column(
@@ -108,8 +120,13 @@ class HomePage extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
                 child: const Text("СМОТРЕТЬ МЕНЮ"),
               ),
@@ -130,7 +147,10 @@ class HomePage extends StatelessWidget {
         builder: (context, value, child) {
           return Transform.translate(
             offset: Offset(value * 150, 0),
-            child: Opacity(opacity: (1.0 - value).clamp(0.0, 1.0), child: child),
+            child: Opacity(
+              opacity: (1.0 - value).clamp(0.0, 1.0),
+              child: child,
+            ),
           );
         },
         child: Container(
@@ -138,13 +158,19 @@ class HomePage extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(40),
-            border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.2),
+              width: 2,
+            ),
           ),
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: AppColors.primary.withOpacity(0.1), width: 1),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.1),
+                width: 1,
+              ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
@@ -189,8 +215,8 @@ class _NoveltySectionState extends State<_NoveltySection> {
 
   void _checkScroll() {
     if (_scrollController.hasClients) {
-      final maxScroll = _scrollController.positions.isNotEmpty 
-          ? _scrollController.positions.first.maxScrollExtent 
+      final maxScroll = _scrollController.positions.isNotEmpty
+          ? _scrollController.positions.first.maxScrollExtent
           : 0.0;
       final can = maxScroll > 10;
       if (_canScroll.value != can) {
@@ -252,14 +278,18 @@ class _NoveltySectionState extends State<_NoveltySection> {
                         );
                       },
                     ),
-                  if (canScroll) const SizedBox(width: 4) else const SizedBox(width: 100),
+                  if (canScroll)
+                    const SizedBox(width: 4)
+                  else
+                    const SizedBox(width: 100),
                   Expanded(
                     child: ListView.separated(
                       controller: _scrollController,
                       scrollDirection: Axis.horizontal,
                       padding: EdgeInsets.only(right: canScroll ? 0 : 100),
                       itemCount: 5,
-                      separatorBuilder: (context, index) => const SizedBox(width: 30),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 30),
                       itemBuilder: (context, index) {
                         return _ProductCard(
                           name: "Новинка #${index + 1}",
@@ -276,8 +306,15 @@ class _NoveltySectionState extends State<_NoveltySection> {
                       valueListenable: _scrollOffset,
                       builder: (context, offset, _) {
                         bool isAtEnd = false;
-                        if (_scrollController.hasClients && _scrollController.positions.isNotEmpty) {
-                          isAtEnd = offset >= _scrollController.positions.first.maxScrollExtent - 10;
+                        if (_scrollController.hasClients &&
+                            _scrollController.positions.isNotEmpty) {
+                          isAtEnd =
+                              offset >=
+                              _scrollController
+                                      .positions
+                                      .first
+                                      .maxScrollExtent -
+                                  10;
                         }
                         return Visibility(
                           maintainSize: true,
@@ -338,8 +375,8 @@ class _PopularitySectionState extends State<_PopularitySection> {
 
   void _checkScroll() {
     if (_scrollController.hasClients) {
-      final maxScroll = _scrollController.positions.isNotEmpty 
-          ? _scrollController.positions.first.maxScrollExtent 
+      final maxScroll = _scrollController.positions.isNotEmpty
+          ? _scrollController.positions.first.maxScrollExtent
           : 0.0;
       final can = maxScroll > 10;
       if (_canScroll.value != can) {
@@ -401,25 +438,31 @@ class _PopularitySectionState extends State<_PopularitySection> {
                         );
                       },
                     ),
-                  if (canScroll) const SizedBox(width: 4) else const SizedBox(width: 100),
+                  if (canScroll)
+                    const SizedBox(width: 4)
+                  else
+                    const SizedBox(width: 100),
                   Expanded(
                     child: ListView.separated(
                       controller: _scrollController,
                       scrollDirection: Axis.horizontal,
                       padding: EdgeInsets.only(right: canScroll ? 0 : 100),
                       itemCount: 8,
-                      separatorBuilder: (context, index) => const SizedBox(width: 30),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 30),
                       itemBuilder: (context, index) {
                         final items = [
                           {
                             "name": "Набор Шоколадных Конфет",
                             "price": "1 200 ₽",
-                            "image": "assets/images/placeholders/placeholder_main_card.jpg",
+                            "image":
+                                "assets/images/placeholders/placeholder_main_card.jpg",
                           },
                           {
                             "name": "Набор Макарун",
                             "price": "1 500 ₽",
-                            "image": "assets/images/products/kits/sweet_kit_1.jpg",
+                            "image":
+                                "assets/images/products/kits/sweet_kit_1.jpg",
                           },
                           {
                             "name": "Трюфели ручной работы",
@@ -434,17 +477,20 @@ class _PopularitySectionState extends State<_PopularitySection> {
                           {
                             "name": "Набор Макарун2",
                             "price": "1 500 ₽",
-                            "image": "assets/images/products/whoopey_cupcake.jpg",
+                            "image":
+                                "assets/images/products/whoopey_cupcake.jpg",
                           },
                           {
                             "name": "Трюфели ручной работы2",
                             "price": "1 800 ₽",
-                            "image": "assets/images/products/whoopey_cupcake_2.jpg",
+                            "image":
+                                "assets/images/products/whoopey_cupcake_2.jpg",
                           },
                           {
                             "name": "Трюфели ручной работы2",
                             "price": "1 800 ₽",
-                            "image": "assets/images/products/kits/buckets/bucket_chokolate.png",
+                            "image":
+                                "assets/images/products/kits/buckets/bucket_chokolate.png",
                           },
                           {
                             "name": "Трюфели ручной работы2",
@@ -467,8 +513,15 @@ class _PopularitySectionState extends State<_PopularitySection> {
                       valueListenable: _scrollOffset,
                       builder: (context, offset, _) {
                         bool isAtEnd = false;
-                        if (_scrollController.hasClients && _scrollController.positions.isNotEmpty) {
-                          isAtEnd = offset >= _scrollController.positions.first.maxScrollExtent - 10;
+                        if (_scrollController.hasClients &&
+                            _scrollController.positions.isNotEmpty) {
+                          isAtEnd =
+                              offset >=
+                              _scrollController
+                                      .positions
+                                      .first
+                                      .maxScrollExtent -
+                                  10;
                         }
                         return Visibility(
                           maintainSize: true,
@@ -526,7 +579,7 @@ class _CatalogSection extends StatelessWidget {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: 10,
+            itemCount: 12,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 6,
               crossAxisSpacing: 20,
@@ -538,15 +591,16 @@ class _CatalogSection extends StatelessWidget {
                 {
                   "name": "Набор Шоколадных Конфет",
                   "price": "1 200 ₽",
-                  "image": "assets/images/placeholders/placeholder_main_card.jpg",
+                  "image":
+                      "assets/images/placeholders/placeholder_main_card.jpg",
                 },
                 {
-                  "name": "Набор Макарун",
+                  "name": "Подарочный набор",
                   "price": "1 500 ₽",
                   "image": "assets/images/products/kits/sweet_kit_1.jpg",
                 },
                 {
-                  "name": "Трюфели ручной работы",
+                  "name": "Трюфаки",
                   "price": "1 800 ₽",
                   "image": "assets/images/products/bluberry_cup.jpg",
                 },
@@ -568,7 +622,8 @@ class _CatalogSection extends StatelessWidget {
                 {
                   "name": "Трюфели ручной работы2",
                   "price": "1 800 ₽",
-                  "image": "assets/images/products/kits/buckets/bucket_chokolate.png",
+                  "image":
+                      "assets/images/products/kits/buckets/bucket_chokolate.png",
                 },
                 {
                   "name": "Трюфели ручной работы2",
@@ -578,7 +633,19 @@ class _CatalogSection extends StatelessWidget {
                 {
                   "name": "Трюфели ручной работы2",
                   "price": "1 800 ₽",
-                  "image": "assets/images/products/kits/buckets/bucket_chokolate.png",
+                  "image":
+                      "assets/images/products/kits/buckets/bucket_chokolate.png",
+                },
+                {
+                  "name": "Трюфели ручной работы2",
+                  "price": "1 800 ₽",
+                  "image": "assets/images/products/kits/champain.jpg",
+                },
+                {
+                  "name": "Трюфели ручной работы2",
+                  "price": "1 800 ₽",
+                  "image":
+                      "assets/images/products/kits/buckets/bucket_chokolate.png",
                 },
                 {
                   "name": "Трюфели ручной работы2",
@@ -590,9 +657,6 @@ class _CatalogSection extends StatelessWidget {
                 name: "Продукт ${index + 1}",
                 price: "850 ₽",
                 imagePath: items[index]["image"]!,
-                /* index % 2 == 0
-                    ? "assets/images/cupcake_1.jpg"
-                    : "assets/images/cupcake_2.jpg",*/
                 index: index,
               );
             },
@@ -627,7 +691,11 @@ class _CompactProductCard extends StatelessWidget {
             color: AppColors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
-              BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: const Offset(0, 2)),
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
           child: Column(
@@ -635,7 +703,9 @@ class _CompactProductCard extends StatelessWidget {
             children: [
               Expanded(
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: Container(
                     color: AppColors.accent.withOpacity(0.05),
                     width: double.infinity,
@@ -683,7 +753,11 @@ class _ScrollButton extends StatelessWidget {
   final VoidCallback onPressed;
   final BorderRadius? borderRadius;
 
-  const _ScrollButton({required this.icon, required this.onPressed, this.borderRadius});
+  const _ScrollButton({
+    required this.icon,
+    required this.onPressed,
+    this.borderRadius,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -693,7 +767,13 @@ class _ScrollButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: borderRadius ?? BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 15, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -740,7 +820,11 @@ class _ProductCard extends StatelessWidget {
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
-                  BoxShadow(color: AppColors.shadow, blurRadius: 30, offset: const Offset(0, 15)),
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
+                  ),
                 ],
               ),
               child: Column(
@@ -772,12 +856,18 @@ class _ProductCard extends StatelessWidget {
                     child: Container(
                       height: 200,
                       width: double.infinity,
-                      decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1)),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.1),
+                      ),
                       child: Image.asset(
                         imagePath,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.cake, size: 80, color: Colors.brown),
+                            const Icon(
+                              Icons.cake,
+                              size: 80,
+                              color: Colors.brown,
+                            ),
                       ),
                     ),
                   ),
@@ -815,7 +905,9 @@ class _ProductCard extends StatelessWidget {
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                         child: const Text("В КОРЗИНУ"),
                       ),
@@ -852,7 +944,11 @@ class _ProductCard extends StatelessWidget {
               color: AppColors.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(color: AppColors.shadow, blurRadius: 15, offset: const Offset(0, 4)),
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
             child: Column(
@@ -860,7 +956,9 @@ class _ProductCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                     child: Container(
                       color: AppColors.accent.withOpacity(0.1),
                       width: double.infinity,
@@ -868,7 +966,11 @@ class _ProductCard extends StatelessWidget {
                         imagePath,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.cake, size: 60, color: Colors.brown),
+                            const Icon(
+                              Icons.cake,
+                              size: 60,
+                              color: Colors.brown,
+                            ),
                       ),
                     ),
                   ),
@@ -916,14 +1018,21 @@ class _SnowEffect extends StatefulWidget {
   State<_SnowEffect> createState() => _SnowEffectState();
 }
 
-class _SnowEffectState extends State<_SnowEffect> with SingleTickerProviderStateMixin {
+class _SnowEffectState extends State<_SnowEffect>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  final List<_Snowflake> _snowflakes = List.generate(100, (index) => _Snowflake());
+  final List<_Snowflake> _snowflakes = List.generate(
+    100,
+    (index) => _Snowflake(),
+  );
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
   }
 
   @override
@@ -941,7 +1050,10 @@ class _SnowEffectState extends State<_SnowEffect> with SingleTickerProviderState
           for (var snowflake in _snowflakes) {
             snowflake.update();
           }
-          return CustomPaint(painter: _SnowPainter(_snowflakes), size: Size.infinite);
+          return CustomPaint(
+            painter: _SnowPainter(_snowflakes),
+            size: Size.infinite,
+          );
         },
       ),
     );
@@ -969,14 +1081,21 @@ class _Snowflake {
 
 class _SnowPainter extends CustomPainter {
   final List<_Snowflake> snowflakes;
+
   _SnowPainter(this.snowflakes);
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.white.withOpacity(0.6);
     for (var snowflake in snowflakes) {
-      canvas.drawCircle(Offset(snowflake.x * size.width, snowflake.y * size.height), snowflake.radius, paint);
+      canvas.drawCircle(
+        Offset(snowflake.x * size.width, snowflake.y * size.height),
+        snowflake.radius,
+        paint,
+      );
     }
   }
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
@@ -992,45 +1111,110 @@ class _FixedHeader extends StatelessWidget {
         tween: Tween<double>(begin: -100.0, end: 0.0),
         duration: const Duration(milliseconds: 1500),
         curve: Curves.easeOutExpo,
-        builder: (context, value, child) {
-          return Transform.translate(offset: Offset(0, value), child: child);
-        },
+        builder: (context, value, child) =>
+            Transform.translate(offset: Offset(0, value), child: child),
         child: Container(
           width: double.infinity,
           height: 80,
           padding: const EdgeInsets.symmetric(horizontal: 40),
           decoration: BoxDecoration(
-            color: AppColors.white.withOpacity(0.9),
+            color: AppColors.white.withOpacity(0.95),
             boxShadow: [
-              BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    const Text("IRINKO", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, letterSpacing: 3, color: AppColors.primary)),
-                    const SizedBox(width: 8),
-                    Flexible(child: Text("Sweets", style: GoogleFonts.dancingScript(fontSize: 28, fontWeight: FontWeight.w500, color: AppColors.primary.withOpacity(0.7)), overflow: TextOverflow.ellipsis)),
-                  ],
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      const Text(
+                        "IRINKO",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 3,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          "Sweets",
+                          style: GoogleFonts.dancingScript(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.primary.withOpacity(0.7),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 20),
-              Flexible(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: const [
-                      _HeaderLink(text: "ГЛАВНАЯ"),
-                      SizedBox(width: 30),
-                      _HeaderLink(text: "МЕНЮ"),
-                      SizedBox(width: 30),
-                      _HeaderLink(text: "О НАС", targetPage: AboutPage()),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const _HeaderLink(text: "ГЛАВНАЯ"),
+                  const SizedBox(width: 30),
+                  const _HeaderLink(text: "МЕНЮ"),
+                  const SizedBox(width: 30),
+                  const _HeaderLink(
+                    text: "АКЦИИ",
+                    targetPage: PromotionsPage(),
+                    hasBadge: true,
+                  ),
+                  const SizedBox(width: 30),
+                  const _HeaderLink(text: "О НАС", targetPage: AboutPage()),
+                ],
+              ),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Stack(
+                    children: [
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(
+                          Icons.shopping_bag_outlined,
+                          color: AppColors.primary,
+                          size: 28,
+                        ),
+                      ),
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: const Text(
+                            "2",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1045,43 +1229,293 @@ class _FixedHeader extends StatelessWidget {
 
 class _FooterSection extends StatelessWidget {
   const _FooterSection();
+
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity, color: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 100),
+      width: double.infinity,
+      color: AppColors.primary,
+      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 100),
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text("IRINKO", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 4, color: AppColors.background)), const SizedBox(height: 10), Text("Sweets", style: GoogleFonts.dancingScript(fontSize: 32, color: AppColors.background.withOpacity(0.8))), const SizedBox(height: 20), Text("Создаем сладкие шедевры\nдля ваших особенных моментов.", style: GoogleFonts.montserrat(color: AppColors.background.withOpacity(0.6), fontSize: 14, height: 1.6))])),
-              _buildFooterColumn(context, "НАВИГАЦИЯ", [_FooterLinkData("Главная"), _FooterLinkData("Меню"), _FooterLinkData("Доставка"), _FooterLinkData("О нас", target: const AboutPage())]),
-              _buildFooterColumn(context, "КОНТАКТЫ", [_FooterLinkData("+7 (999) 000-00-00"), _FooterLinkData("hello@irinko.ru"), _FooterLinkData("г. Москва, ул. Примерная, 10")]),
+              // Column 1: Logo & Socials
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "IRINKO",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 4,
+                        color: AppColors.background,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      "Sweets",
+                      style: GoogleFonts.dancingScript(
+                        fontSize: 32,
+                        color: AppColors.background.withOpacity(0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Создаем сладкие шедевры\nдля ваших особенных моментов.",
+                      style: GoogleFonts.montserrat(
+                        color: AppColors.background.withOpacity(0.6),
+                        fontSize: 14,
+                        height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      children: [
+                        _SocialIcon(
+                          icon: FontAwesomeIcons.youtube,
+                          color: AppColors.error,
+                          onPressed: () => _launchUrl(AppConsts.youtube),
+                        ),
+                        const SizedBox(width: 15),
+                        _SocialIcon(
+                          icon: FontAwesomeIcons.instagram,
+                          color: AppColors.lightRed,
+                          onPressed: () => _launchUrl(AppConsts.instagram),
+                        ),
+                        const SizedBox(width: 15),
+                        _SocialIcon(
+                          icon: FontAwesomeIcons.telegram,
+                          color: AppColors.lightBlue,
+                          onPressed: () => _launchUrl(AppConsts.telegram),
+                        ),
+                        const SizedBox(width: 15),
+                        _SocialIcon(
+                          icon: FontAwesomeIcons.whatsapp,
+                          color: AppColors.lightGreen,
+                          onPressed: () => _launchUrl(AppConsts.whatsapp),
+                        ),
+                        const SizedBox(width: 15),
+                        _SocialIcon(
+                          icon: Icons.email_outlined,
+                          color: AppColors.surface,
+                          onPressed: () => _launchUrl(AppConsts.email),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: _buildFooterColumn(context, "НАВИГАЦИЯ", [
+                    _FooterLinkData("Главная"),
+                    _FooterLinkData("Меню"),
+                    _FooterLinkData("Акции", target: const PromotionsPage()),
+                    _FooterLinkData("Доставка"),
+                    _FooterLinkData("О нас", target: const AboutPage()),
+                  ], alignment: CrossAxisAlignment.start),
+                ),
+              ),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: _buildFooterColumn(context, "КОНТАКТЫ", [
+                    _FooterLinkData("+7 (999) 000-00-00"),
+                    _FooterLinkData("hello@irinko.ru"),
+                    _FooterLinkData("г. Москва, ул. Примерная, 10"),
+                  ], alignment: CrossAxisAlignment.end),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 60), Divider(color: AppColors.background.withOpacity(0.1)), const SizedBox(height: 20), Text("© 2026 IRINKO Sweets. Все права защищены.", style: GoogleFonts.montserrat(color: AppColors.background.withOpacity(0.4), fontSize: 12)),
+          const SizedBox(height: 60),
+          Divider(color: AppColors.background.withOpacity(0.1)),
+          const SizedBox(height: 20),
+          Text(
+            "© 2026 IRINKO Sweets. Все права защищены.",
+            style: GoogleFonts.montserrat(
+              color: AppColors.background.withOpacity(0.4),
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
   }
-  Widget _buildFooterColumn(BuildContext context, String title, List<_FooterLinkData> items) {
+
+  Widget _buildFooterColumn(
+    BuildContext context,
+    String title,
+    List<_FooterLinkData> items, {
+    CrossAxisAlignment alignment = CrossAxisAlignment.start,
+  }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: alignment,
       children: [
-        Text(title, style: GoogleFonts.montserrat(color: AppColors.background, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1.2)),
+        Text(
+          title,
+          style: GoogleFonts.montserrat(
+            color: AppColors.background,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            letterSpacing: 1.2,
+          ),
+        ),
         const SizedBox(height: 20),
-        ...items.map((item) => Padding(padding: const EdgeInsets.only(bottom: 12), child: GestureDetector(onTap: item.target != null ? () => Navigator.push(context, MaterialPageRoute(builder: (context) => item.target!)) : null, child: Text(item.text, style: GoogleFonts.montserrat(color: AppColors.background.withOpacity(0.6), fontSize: 14))))),
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: GestureDetector(
+              onTap: item.target != null
+                  ? () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => item.target!),
+                    )
+                  : null,
+              child: Text(
+                item.text,
+                textAlign: alignment == CrossAxisAlignment.center
+                    ? TextAlign.center
+                    : (alignment == CrossAxisAlignment.end
+                          ? TextAlign.right
+                          : TextAlign.left),
+                style: GoogleFonts.montserrat(
+                  color: AppColors.background.withOpacity(0.6),
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 }
 
-class _FooterLinkData { final String text; final Widget? target; _FooterLinkData(this.text, {this.target}); }
+class _SocialIcon extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
 
-class _HeaderLink extends StatelessWidget {
-  final String text; final Widget? targetPage; const _HeaderLink({required this.text, this.targetPage});
+  const _SocialIcon({
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: targetPage != null ? () => Navigator.push(context, MaterialPageRoute(builder: (context) => targetPage!)) : null, child: MouseRegion(cursor: SystemMouseCursors.click, child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.primary, letterSpacing: 1.1))));
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.background.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: FaIcon(icon, color: color, size: 20),
+        ),
+      ),
+    );
+  }
+}
+
+class _FooterLinkData {
+  final String text;
+  final Widget? target;
+
+  _FooterLinkData(this.text, {this.target});
+}
+
+class _HeaderLink extends StatefulWidget {
+  final String text;
+  final Widget? targetPage;
+  final bool hasBadge;
+
+  const _HeaderLink({
+    required this.text,
+    this.targetPage,
+    this.hasBadge = false,
+    super.key,
+  });
+
+  @override
+  State<_HeaderLink> createState() => _HeaderLinkState();
+}
+
+class _HeaderLinkState extends State<_HeaderLink> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.targetPage != null
+            ? () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => widget.targetPage!),
+              )
+            : null,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14,
+                    fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w400,
+                    color: _isHovered
+                        ? AppColors.primary
+                        : AppColors.primary.withOpacity(0.8),
+                    letterSpacing: 1.1,
+                  ),
+                  child: Text(widget.text),
+                ),
+                const SizedBox(height: 4),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  height: 1.5,
+                  width: _isHovered ? 20 : 0,
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+            if (widget.hasBadge)
+              Positioned(
+                right: -8,
+                top: -4,
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
