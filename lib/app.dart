@@ -25,35 +25,13 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
-        children: /*[
-          PageView(
-            scrollDirection: Axis.vertical,
-            children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.85,
-                child: Stack(children: [_buildHeroText(context), _buildHeroImage()]),
-              ),
-              SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 100),
-                    const _PopularitySection(),
-                    const SizedBox(height: 100),
-                    const _FooterSection(),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const _FixedHeader(),
-          const _SnowEffect(),
-        ],*/ [
+        children: [
           SingleChildScrollView(
             child: Column(
               children: [
                 // 1. Hero Section
                 SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.85,
+                  height: MediaQuery.of(context).size.height,
                   child: Stack(children: [_buildHeroText(context), _buildHeroImage()]),
                 ),
 
@@ -350,23 +328,32 @@ class _PopularitySectionState extends State<_PopularitySection> {
   void initState() {
     super.initState();
     _scrollController.addListener(() {
-      _scrollOffset.value = _scrollController.offset;
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _scrollController.hasClients) {
-        setState(() {
-          _canScroll.value = _scrollController.position.maxScrollExtent > 10;
-        });
+      if (_scrollController.hasClients) {
+        _scrollOffset.value = _scrollController.offset;
       }
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkScroll());
+  }
+
+  void _checkScroll() {
+    if (_scrollController.hasClients) {
+      // Безопасное получение maxScrollExtent
+      final maxScroll = _scrollController.positions.first.maxScrollExtent;
+      final can = maxScroll > 10;
+      if (_canScroll.value != can) {
+        _canScroll.value = can;
+      }
+    }
   }
 
   void _scroll(double offset) {
-    _scrollController.animateTo(
-      _scrollController.offset + offset,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.offset + offset,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
@@ -386,18 +373,18 @@ class _PopularitySectionState extends State<_PopularitySection> {
           ),
         ),
         const SizedBox(height: 40),
-        ValueListenableBuilder<bool>(
-          valueListenable: _canScroll,
-          builder: (context, canScroll, child) {
-            return SizedBox(
-              height: 450,
-              child: Row(
+        SizedBox(
+          height: 450,
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _canScroll,
+            builder: (context, canScroll, _) {
+              return Row(
                 children: [
-                  // Левая кнопка (только если есть скролл)
+                  // Левая кнопка
                   if (canScroll)
                     ValueListenableBuilder<double>(
                       valueListenable: _scrollOffset,
-                      builder: (context, offset, child) {
+                      builder: (context, offset, _) {
                         return Visibility(
                           maintainSize: true,
                           maintainAnimation: true,
@@ -408,26 +395,21 @@ class _PopularitySectionState extends State<_PopularitySection> {
                             child: _ScrollButton(
                               icon: Icons.chevron_left,
                               onPressed: () => _scroll(-350),
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(16),
-                                bottomLeft: Radius.circular(16),
-                              ),
                             ),
                           ),
                         );
                       },
                     ),
 
-                  // Зазор, чтобы в сумме (40+56+4) было ровно 100
-                  if (canScroll) const SizedBox(width: 4),
+                  // Зазор для выравнивания: 40 (отступ) + 56 (кнопка) + 4 (зазор) = 100
+                  if (canScroll) const SizedBox(width: 4) else const SizedBox(width: 100),
 
-                  // Область со списком (строго между кнопками)
+                  // Список карточек (строго между кнопками)
                   Expanded(
                     child: ListView.separated(
                       controller: _scrollController,
                       scrollDirection: Axis.horizontal,
-                      // Если скролла нет, возвращаем отступ 100 для выравнивания
-                      padding: EdgeInsets.symmetric(horizontal: canScroll ? 0 : 100),
+                      padding: EdgeInsets.only(right: canScroll ? 0 : 100),
                       itemCount: 8,
                       separatorBuilder: (context, index) => const SizedBox(width: 30),
                       itemBuilder: (context, index) {
@@ -483,16 +465,18 @@ class _PopularitySectionState extends State<_PopularitySection> {
                     ),
                   ),
 
-                  if (canScroll) const SizedBox(width: 4),
-
-                  // Правая кнопка
-                  if (canScroll)
+                  // Зазор и правая кнопка
+                  if (canScroll) ...[
+                    const SizedBox(width: 4),
                     ValueListenableBuilder<double>(
                       valueListenable: _scrollOffset,
-                      builder: (context, offset, child) {
+                      builder: (context, offset, _) {
                         bool isAtEnd = false;
-                        if (_scrollController.hasClients) {
-                          isAtEnd = offset >= _scrollController.position.maxScrollExtent - 10;
+                        if (_scrollController.hasClients &&
+                            _scrollController.positions.isNotEmpty) {
+                          // Используем positions.first для безопасности в Web
+                          isAtEnd =
+                              offset >= _scrollController.positions.first.maxScrollExtent - 10;
                         }
                         return Visibility(
                           maintainSize: true,
@@ -500,23 +484,20 @@ class _PopularitySectionState extends State<_PopularitySection> {
                           maintainState: true,
                           visible: !isAtEnd,
                           child: Padding(
-                            padding: const EdgeInsets.only(right: 40, left: 4),
+                            padding: const EdgeInsets.only(right: 40),
                             child: _ScrollButton(
                               icon: Icons.chevron_right,
                               onPressed: () => _scroll(350),
-                              borderRadius: BorderRadius.only(
-                                topRight: Radius.circular(16),
-                                bottomRight: Radius.circular(16),
-                              ),
                             ),
                           ),
                         );
                       },
                     ),
+                  ],
                 ],
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ],
     );
