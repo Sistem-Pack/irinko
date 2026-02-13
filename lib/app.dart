@@ -35,11 +35,22 @@ class HomePage extends StatelessWidget {
                   child: Stack(children: [_buildHeroText(context), _buildHeroImage()]),
                 ),
 
+                // 2. Новинки (по типу Популярное)
+                const _NoveltySection(),
+
+                const SizedBox(height: 100),
+
+                // 3. Популярное
                 const _PopularitySection(),
 
                 const SizedBox(height: 100),
 
-                // 3. Футер
+                // 4. Каталог (Сетка)
+                const _CatalogSection(),
+
+                const SizedBox(height: 100),
+
+                // 5. Футер
                 const _FooterSection(),
               ],
             ),
@@ -153,162 +164,152 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _SnowEffect extends StatefulWidget {
-  const _SnowEffect();
+class _NoveltySection extends StatefulWidget {
+  const _NoveltySection();
 
   @override
-  State<_SnowEffect> createState() => _SnowEffectState();
+  State<_NoveltySection> createState() => _NoveltySectionState();
 }
 
-class _SnowEffectState extends State<_SnowEffect> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  final List<_Snowflake> _snowflakes = List.generate(100, (index) => _Snowflake());
+class _NoveltySectionState extends State<_NoveltySection> {
+  final ScrollController _scrollController = ScrollController();
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
+  final ValueNotifier<bool> _canScroll = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
+    _scrollController.addListener(() {
+      if (_scrollController.hasClients) {
+        _scrollOffset.value = _scrollController.offset;
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkScroll());
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          for (var snowflake in _snowflakes) {
-            snowflake.update();
-          }
-          return CustomPaint(painter: _SnowPainter(_snowflakes), size: Size.infinite);
-        },
-      ),
-    );
-  }
-}
-
-class _Snowflake {
-  double x = math.Random().nextDouble();
-  double y = math.Random().nextDouble();
-  double radius = math.Random().nextDouble() * 2 + 1;
-  double speed = math.Random().nextDouble() * 0.002 + 0.0005;
-  double drift = math.Random().nextDouble() * 0.001 - 0.0005;
-
-  void update() {
-    y += speed;
-    x += drift;
-    if (y > 1.1) {
-      y = -0.1;
-      x = math.Random().nextDouble();
+  void _checkScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.positions.isNotEmpty 
+          ? _scrollController.positions.first.maxScrollExtent 
+          : 0.0;
+      final can = maxScroll > 10;
+      if (_canScroll.value != can) {
+        _canScroll.value = can;
+      }
     }
-    if (x > 1.1) x = -0.1;
-    if (x < -0.1) x = 1.1;
   }
-}
 
-class _SnowPainter extends CustomPainter {
-  final List<_Snowflake> snowflakes;
-
-  _SnowPainter(this.snowflakes);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.6);
-    for (var snowflake in snowflakes) {
-      canvas.drawCircle(
-        Offset(snowflake.x * size.width, snowflake.y * size.height),
-        snowflake.radius,
-        paint,
+  void _scroll(double offset) {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.offset + offset,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
       );
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class _FixedHeader extends StatelessWidget {
-  const _FixedHeader();
-
-  @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: -100.0, end: 0.0),
-        duration: const Duration(milliseconds: 1500),
-        curve: Curves.easeOutExpo,
-        builder: (context, value, child) {
-          return Transform.translate(offset: Offset(0, value), child: child);
-        },
-        child: Container(
-          width: double.infinity,
-          height: 80,
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          decoration: BoxDecoration(
-            color: AppColors.white.withOpacity(0.9),
-            boxShadow: [
-              BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: const Offset(0, 4)),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    const Text(
-                      "IRINKO",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 3,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "Sweets",
-                        style: GoogleFonts.dancingScript(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary.withOpacity(0.7),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 20),
-              Flexible(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: const [
-                      _HeaderLink(text: "ГЛАВНАЯ"),
-                      SizedBox(width: 30),
-                      _HeaderLink(text: "МЕНЮ"),
-                      SizedBox(width: 30),
-                      _HeaderLink(text: "О НАС", targetPage: AboutPage()),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 100),
+          child: Text(
+            "Новинки",
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 40),
+        SizedBox(
+          height: 450,
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _canScroll,
+            builder: (context, canScroll, _) {
+              return Row(
+                children: [
+                  if (canScroll)
+                    ValueListenableBuilder<double>(
+                      valueListenable: _scrollOffset,
+                      builder: (context, offset, _) {
+                        return Visibility(
+                          maintainSize: true,
+                          maintainAnimation: true,
+                          maintainState: true,
+                          visible: offset > 10,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 40),
+                            child: _ScrollButton(
+                              icon: Icons.chevron_left,
+                              onPressed: () => _scroll(-350),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  if (canScroll) const SizedBox(width: 4) else const SizedBox(width: 100),
+                  Expanded(
+                    child: ListView.separated(
+                      controller: _scrollController,
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.only(right: canScroll ? 0 : 100),
+                      itemCount: 5,
+                      separatorBuilder: (context, index) => const SizedBox(width: 30),
+                      itemBuilder: (context, index) {
+                        return _ProductCard(
+                          name: "Новинка #${index + 1}",
+                          price: "1 450 ₽",
+                          imagePath: "assets/images/cupcake_2.jpg",
+                          index: index,
+                        );
+                      },
+                    ),
+                  ),
+                  if (canScroll) ...[
+                    const SizedBox(width: 4),
+                    ValueListenableBuilder<double>(
+                      valueListenable: _scrollOffset,
+                      builder: (context, offset, _) {
+                        bool isAtEnd = false;
+                        if (_scrollController.hasClients && _scrollController.positions.isNotEmpty) {
+                          isAtEnd = offset >= _scrollController.positions.first.maxScrollExtent - 10;
+                        }
+                        return Visibility(
+                          maintainSize: true,
+                          maintainAnimation: true,
+                          maintainState: true,
+                          visible: !isAtEnd,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 40),
+                            child: _ScrollButton(
+                              icon: Icons.chevron_right,
+                              onPressed: () => _scroll(350),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _scrollOffset.dispose();
+    _canScroll.dispose();
+    super.dispose();
   }
 }
 
@@ -337,8 +338,9 @@ class _PopularitySectionState extends State<_PopularitySection> {
 
   void _checkScroll() {
     if (_scrollController.hasClients) {
-      // Безопасное получение maxScrollExtent
-      final maxScroll = _scrollController.positions.first.maxScrollExtent;
+      final maxScroll = _scrollController.positions.isNotEmpty 
+          ? _scrollController.positions.first.maxScrollExtent 
+          : 0.0;
       final can = maxScroll > 10;
       if (_canScroll.value != can) {
         _canScroll.value = can;
@@ -380,7 +382,6 @@ class _PopularitySectionState extends State<_PopularitySection> {
             builder: (context, canScroll, _) {
               return Row(
                 children: [
-                  // Левая кнопка
                   if (canScroll)
                     ValueListenableBuilder<double>(
                       valueListenable: _scrollOffset,
@@ -400,11 +401,7 @@ class _PopularitySectionState extends State<_PopularitySection> {
                         );
                       },
                     ),
-
-                  // Зазор для выравнивания: 40 (отступ) + 56 (кнопка) + 4 (зазор) = 100
                   if (canScroll) const SizedBox(width: 4) else const SizedBox(width: 100),
-
-                  // Список карточек (строго между кнопками)
                   Expanded(
                     child: ListView.separated(
                       controller: _scrollController,
@@ -464,19 +461,14 @@ class _PopularitySectionState extends State<_PopularitySection> {
                       },
                     ),
                   ),
-
-                  // Зазор и правая кнопка
                   if (canScroll) ...[
                     const SizedBox(width: 4),
                     ValueListenableBuilder<double>(
                       valueListenable: _scrollOffset,
                       builder: (context, offset, _) {
                         bool isAtEnd = false;
-                        if (_scrollController.hasClients &&
-                            _scrollController.positions.isNotEmpty) {
-                          // Используем positions.first для безопасности в Web
-                          isAtEnd =
-                              offset >= _scrollController.positions.first.maxScrollExtent - 10;
+                        if (_scrollController.hasClients && _scrollController.positions.isNotEmpty) {
+                          isAtEnd = offset >= _scrollController.positions.first.maxScrollExtent - 10;
                         }
                         return Visibility(
                           maintainSize: true,
@@ -509,6 +501,180 @@ class _PopularitySectionState extends State<_PopularitySection> {
     _scrollOffset.dispose();
     _canScroll.dispose();
     super.dispose();
+  }
+}
+
+class _CatalogSection extends StatelessWidget {
+  const _CatalogSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 100),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Весь ассортимент",
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 40),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 10,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 6,
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
+              childAspectRatio: 0.75,
+            ),
+            itemBuilder: (context, index) {
+              final items = [
+                {
+                  "name": "Набор Шоколадных Конфет",
+                  "price": "1 200 ₽",
+                  "image": "assets/images/placeholders/placeholder_main_card.jpg",
+                },
+                {
+                  "name": "Набор Макарун",
+                  "price": "1 500 ₽",
+                  "image": "assets/images/products/kits/sweet_kit_1.jpg",
+                },
+                {
+                  "name": "Трюфели ручной работы",
+                  "price": "1 800 ₽",
+                  "image": "assets/images/products/bluberry_cup.jpg",
+                },
+                {
+                  "name": "Набор Шоколадных Конфет2",
+                  "price": "1 200 ₽",
+                  "image": "assets/images/products/whoopey_cake.jpg",
+                },
+                {
+                  "name": "Набор Макарун2",
+                  "price": "1 500 ₽",
+                  "image": "assets/images/products/whoopey_cupcake.jpg",
+                },
+                {
+                  "name": "Трюфели ручной работы2",
+                  "price": "1 800 ₽",
+                  "image": "assets/images/products/whoopey_cupcake_2.jpg",
+                },
+                {
+                  "name": "Трюфели ручной работы2",
+                  "price": "1 800 ₽",
+                  "image": "assets/images/products/kits/buckets/bucket_chokolate.png",
+                },
+                {
+                  "name": "Трюфели ручной работы2",
+                  "price": "1 800 ₽",
+                  "image": "assets/images/products/kits/champain.jpg",
+                },
+                {
+                  "name": "Трюфели ручной работы2",
+                  "price": "1 800 ₽",
+                  "image": "assets/images/products/kits/buckets/bucket_chokolate.png",
+                },
+                {
+                  "name": "Трюфели ручной работы2",
+                  "price": "1 800 ₽",
+                  "image": "assets/images/products/kits/champain.jpg",
+                },
+              ];
+              return _CompactProductCard(
+                name: "Продукт ${index + 1}",
+                price: "850 ₽",
+                imagePath: items[index]["image"]!,
+                /* index % 2 == 0
+                    ? "assets/images/cupcake_1.jpg"
+                    : "assets/images/cupcake_2.jpg",*/
+                index: index,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactProductCard extends StatelessWidget {
+  final String name;
+  final String price;
+  final String imagePath;
+  final int index;
+
+  const _CompactProductCard({
+    required this.name,
+    required this.price,
+    required this.imagePath,
+    required this.index,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {},
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: const Offset(0, 2)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Container(
+                    color: AppColors.accent.withOpacity(0.05),
+                    width: double.infinity,
+                    child: Image.asset(imagePath, fit: BoxFit.cover),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      price,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 13,
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -743,156 +909,179 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-class _FooterSection extends StatelessWidget {
-  const _FooterSection();
+class _SnowEffect extends StatefulWidget {
+  const _SnowEffect();
+
+  @override
+  State<_SnowEffect> createState() => _SnowEffectState();
+}
+
+class _SnowEffectState extends State<_SnowEffect> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  final List<_Snowflake> _snowflakes = List.generate(100, (index) => _Snowflake());
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: AppColors.primary,
-      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 100),
-      child: Column(
-        children: [
-          Row(
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          for (var snowflake in _snowflakes) {
+            snowflake.update();
+          }
+          return CustomPaint(painter: _SnowPainter(_snowflakes), size: Size.infinite);
+        },
+      ),
+    );
+  }
+}
+
+class _Snowflake {
+  double x = math.Random().nextDouble();
+  double y = math.Random().nextDouble();
+  double radius = math.Random().nextDouble() * 2 + 1;
+  double speed = math.Random().nextDouble() * 0.002 + 0.0005;
+  double drift = math.Random().nextDouble() * 0.001 - 0.0005;
+
+  void update() {
+    y += speed;
+    x += drift;
+    if (y > 1.1) {
+      y = -0.1;
+      x = math.Random().nextDouble();
+    }
+    if (x > 1.1) x = -0.1;
+    if (x < -0.1) x = 1.1;
+  }
+}
+
+class _SnowPainter extends CustomPainter {
+  final List<_Snowflake> snowflakes;
+  _SnowPainter(this.snowflakes);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withOpacity(0.6);
+    for (var snowflake in snowflakes) {
+      canvas.drawCircle(Offset(snowflake.x * size.width, snowflake.y * size.height), snowflake.radius, paint);
+    }
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _FixedHeader extends StatelessWidget {
+  const _FixedHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: -100.0, end: 0.0),
+        duration: const Duration(milliseconds: 1500),
+        curve: Curves.easeOutExpo,
+        builder: (context, value, child) {
+          return Transform.translate(offset: Offset(0, value), child: child);
+        },
+        child: Container(
+          width: double.infinity,
+          height: 80,
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          decoration: BoxDecoration(
+            color: AppColors.white.withOpacity(0.9),
+            boxShadow: [
+              BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
                   children: [
-                    const Text(
-                      "IRINKO",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 4,
-                        color: AppColors.background,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "Sweets",
-                      style: GoogleFonts.dancingScript(
-                        fontSize: 32,
-                        color: AppColors.background.withOpacity(0.8),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Создаем сладкие шедевры\nдля ваших особенных моментов.",
-                      style: GoogleFonts.montserrat(
-                        color: AppColors.background.withOpacity(0.6),
-                        fontSize: 14,
-                        height: 1.6,
-                      ),
-                    ),
+                    const Text("IRINKO", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, letterSpacing: 3, color: AppColors.primary)),
+                    const SizedBox(width: 8),
+                    Flexible(child: Text("Sweets", style: GoogleFonts.dancingScript(fontSize: 28, fontWeight: FontWeight.w500, color: AppColors.primary.withOpacity(0.7)), overflow: TextOverflow.ellipsis)),
                   ],
                 ),
               ),
-              _buildFooterColumn(context, "НАВИГАЦИЯ", [
-                _FooterLinkData("Главная"),
-                _FooterLinkData("Меню"),
-                _FooterLinkData("Доставка"),
-                _FooterLinkData("О нас", target: const AboutPage()),
-              ]),
-              _buildFooterColumn(context, "КОНТАКТЫ", [
-                _FooterLinkData("+7 (999) 000-00-00"),
-                _FooterLinkData("hello@irinko.ru"),
-                _FooterLinkData("г. Москва, ул. Примерная, 10"),
-              ]),
+              const SizedBox(width: 20),
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: const [
+                      _HeaderLink(text: "ГЛАВНАЯ"),
+                      SizedBox(width: 30),
+                      _HeaderLink(text: "МЕНЮ"),
+                      SizedBox(width: 30),
+                      _HeaderLink(text: "О НАС", targetPage: AboutPage()),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 60),
-          Divider(color: AppColors.background.withOpacity(0.1)),
-          const SizedBox(height: 20),
-          Text(
-            "© 2026 IRINKO Sweets. Все права защищены.",
-            style: GoogleFonts.montserrat(
-              color: AppColors.background.withOpacity(0.4),
-              fontSize: 12,
-            ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FooterSection extends StatelessWidget {
+  const _FooterSection();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity, color: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 100),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text("IRINKO", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 4, color: AppColors.background)), const SizedBox(height: 10), Text("Sweets", style: GoogleFonts.dancingScript(fontSize: 32, color: AppColors.background.withOpacity(0.8))), const SizedBox(height: 20), Text("Создаем сладкие шедевры\nдля ваших особенных моментов.", style: GoogleFonts.montserrat(color: AppColors.background.withOpacity(0.6), fontSize: 14, height: 1.6))])),
+              _buildFooterColumn(context, "НАВИГАЦИЯ", [_FooterLinkData("Главная"), _FooterLinkData("Меню"), _FooterLinkData("Доставка"), _FooterLinkData("О нас", target: const AboutPage())]),
+              _buildFooterColumn(context, "КОНТАКТЫ", [_FooterLinkData("+7 (999) 000-00-00"), _FooterLinkData("hello@irinko.ru"), _FooterLinkData("г. Москва, ул. Примерная, 10")]),
+            ],
           ),
+          const SizedBox(height: 60), Divider(color: AppColors.background.withOpacity(0.1)), const SizedBox(height: 20), Text("© 2026 IRINKO Sweets. Все права защищены.", style: GoogleFonts.montserrat(color: AppColors.background.withOpacity(0.4), fontSize: 12)),
         ],
       ),
     );
   }
-
   Widget _buildFooterColumn(BuildContext context, String title, List<_FooterLinkData> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.montserrat(
-            color: AppColors.background,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            letterSpacing: 1.2,
-          ),
-        ),
+        Text(title, style: GoogleFonts.montserrat(color: AppColors.background, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1.2)),
         const SizedBox(height: 20),
-        ...items.map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: GestureDetector(
-              onTap: item.target != null
-                  ? () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => item.target!),
-                      );
-                    }
-                  : null,
-              child: Text(
-                item.text,
-                style: GoogleFonts.montserrat(
-                  color: AppColors.background.withOpacity(0.6),
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ),
-        ),
+        ...items.map((item) => Padding(padding: const EdgeInsets.only(bottom: 12), child: GestureDetector(onTap: item.target != null ? () => Navigator.push(context, MaterialPageRoute(builder: (context) => item.target!)) : null, child: Text(item.text, style: GoogleFonts.montserrat(color: AppColors.background.withOpacity(0.6), fontSize: 14))))),
       ],
     );
   }
 }
 
-class _FooterLinkData {
-  final String text;
-  final Widget? target;
-
-  _FooterLinkData(this.text, {this.target});
-}
+class _FooterLinkData { final String text; final Widget? target; _FooterLinkData(this.text, {this.target}); }
 
 class _HeaderLink extends StatelessWidget {
-  final String text;
-  final Widget? targetPage;
-
-  const _HeaderLink({required this.text, this.targetPage});
-
+  final String text; final Widget? targetPage; const _HeaderLink({required this.text, this.targetPage});
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: targetPage != null
-          ? () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => targetPage!));
-            }
-          : null,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: AppColors.primary,
-            letterSpacing: 1.1,
-          ),
-        ),
-      ),
-    );
+    return GestureDetector(onTap: targetPage != null ? () => Navigator.push(context, MaterialPageRoute(builder: (context) => targetPage!)) : null, child: MouseRegion(cursor: SystemMouseCursors.click, child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.primary, letterSpacing: 1.1))));
   }
 }
